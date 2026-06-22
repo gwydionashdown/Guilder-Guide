@@ -1,0 +1,21 @@
+# Guilder Guide — Netlify configuration
+
+[build]
+  # No build step: this is plain HTML/CSS/JS served as-is.
+  publish = "."
+
+# Sensible security headers for a static site.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# LATER: when you add a real homepage and move the calculator to /box3/,
+# uncomment this so old links and search rankings keep working:
+# [[redirects]]
+#   from = "/"
+#   to = "/box3/"
+#   status = 301
+#   force = false
