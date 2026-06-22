@@ -462,19 +462,40 @@
   n("solo").addEventListener("click", function(){ setMode(false); });
   n("partner").addEventListener("click", function(){ setMode(true); });
 
-  // email capture (prototype: in-memory only)
-  var captured = [];   // <-- TODO: POST to your email provider (MailerLite / Kit / ConvertKit) here.
+  // email capture → Kit (ConvertKit) form
+  var KIT_ENDPOINT = "https://app.kit.com/forms/9596325/subscriptions";
   var form = n("capForm");
+  var capBtn = form.querySelector('button[type="submit"]');
+  var capBtnLabel = capBtn.textContent;
   form.addEventListener("submit", function(e){
     e.preventDefault();
     var email = n("email").value.trim();
     var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    n("capErr").style.display = ok ? "none" : "block";
-    if(!ok){ n("email").focus(); return; }
-    captured.push({ email: email, when: new Date().toISOString() });
-    // In production: send `email` (and optionally the computed figures) to your ESP via fetch().
-    form.style.display = "none";
-    n("capDone").style.display = "block";
+    if(!ok){
+      n("capErr").textContent = "Enter a valid email address.";
+      n("capErr").style.display = "block";
+      n("email").focus();
+      return;
+    }
+    n("capErr").style.display = "none";
+    capBtn.disabled = true;
+    capBtn.textContent = "Sending…";
+    fetch(KIT_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" },
+      body: new URLSearchParams({ email_address: email }).toString()
+    })
+    .then(function(res){ if(!res.ok){ throw new Error("status "+res.status); } return res.json().catch(function(){ return {}; }); })
+    .then(function(){
+      form.style.display = "none";
+      n("capDone").style.display = "block";
+    })
+    .catch(function(){
+      capBtn.disabled = false;
+      capBtn.textContent = capBtnLabel;
+      n("capErr").textContent = "Something went wrong — please try again.";
+      n("capErr").style.display = "block";
+    });
   });
 
   // info tooltips: hover (desktop) + tap (mobile) + keyboard focus, with Esc / outside-click to close
